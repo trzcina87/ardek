@@ -7,7 +7,8 @@ import java.util.LinkedList;
 public class Watek extends Thread {
 
     private MainActivity activity;
-    private LinkedList<Komunikat> lista;
+    private volatile LinkedList<Komunikat> lista;
+    public volatile boolean zakoncz;
 
     synchronized void dodajDoListy(Komunikat komunikat) {
         lista.addLast(komunikat);
@@ -24,6 +25,7 @@ public class Watek extends Thread {
     public Watek (MainActivity activity) {
         this.activity = activity;
         this.lista = new LinkedList<>();
+        zakoncz = false;
     }
 
     private void bladpolaczenia() {
@@ -31,10 +33,10 @@ public class Watek extends Thread {
     }
 
     public void run() {
-        while (! isInterrupted()) {
+        while (! zakoncz) {
             Komunikat pierwszy = this.pobierzZListy();
             while(pierwszy != null) {
-               if(! isInterrupted()) {
+               if(! zakoncz) {
                    if (System.currentTimeMillis() - pierwszy.datakomunikatu <= 5000) {
                        try {
                            URL url = new URL("http://192.168.0.177/" + pierwszy.url);
@@ -53,10 +55,15 @@ public class Watek extends Thread {
                }
                pierwszy = this.pobierzZListy();
             }
-            try {
-                sleep(10);
-            } catch (InterruptedException e) {
+            if(zakoncz) {
                 return;
+            }
+            try {
+                sleep(60000);
+            } catch (InterruptedException e) {
+                if(zakoncz) {
+                    return;
+                }
             }
         }
     }
