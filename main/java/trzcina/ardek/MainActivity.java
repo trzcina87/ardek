@@ -18,11 +18,15 @@ import android.view.WindowManager;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.Wearable;
+
 public class MainActivity extends AppCompatActivity {
 
     public Watek watek;
     private NotificationManager notificationmanager = null;
     private OdbiorNotyfikacji odbiornotyfikacji = null;
+    public GoogleApiClient gac = null;
 
     public boolean sprawdzWifi() {
         WifiManager manager = (WifiManager)this.getSystemService(Context.WIFI_SERVICE);
@@ -78,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
         ustawClick();
         ustawWatek();
         ustawNotyfikacje();
+        ustawApi();
     }
 
     private void ustawEkran() {
@@ -140,6 +145,12 @@ public class MainActivity extends AppCompatActivity {
         notificationmanager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Notification notyfikacja = builder.build();
         notificationmanager.notify(0, notyfikacja);
+    }
+
+    private void ustawApi() {
+        gac = new GoogleApiClient.Builder(getApplicationContext()).addApi(Wearable.API).build();
+        gac.connect();
+        Wearable.MessageApi.addListener(gac, new WearListener(this));
     }
 
     @Override
