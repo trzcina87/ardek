@@ -4,6 +4,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.LinkedList;
 
+import trzcina.ardek.ustawienia.Ustawienia;
+
 public class Watek extends Thread {
 
     private MainActivity activity;
@@ -39,7 +41,7 @@ public class Watek extends Thread {
                if(! zakoncz) {
                    if (System.currentTimeMillis() - pierwszy.datakomunikatu <= 5000) {
                        try {
-                           URL url = new URL("http://192.168.0.177/" + pierwszy.url);
+                           URL url = new URL("http://" + Ustawienia.adresip.wartosc + "/" + pierwszy.url);
                            HttpURLConnection polaczenie = (HttpURLConnection) url.openConnection();
                            polaczenie.setInstanceFollowRedirects(false);
                            polaczenie.setConnectTimeout(3000);

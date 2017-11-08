@@ -10,36 +10,58 @@ import android.content.pm.ActivityInfo;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.NotificationCompat;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.Wearable;
 
+import trzcina.ardek.ustawienia.Ustawienia;
+
+@SuppressWarnings("PointlessBooleanExpression")
 public class MainActivity extends AppCompatActivity {
+
+    public static volatile MainActivity activity;
 
     public Watek watek;
     private NotificationManager notificationmanager = null;
     private OdbiorNotyfikacji odbiornotyfikacji = null;
     public GoogleApiClient gac = null;
 
+    private boolean sprawdzNazweWifi(String siecpolaczona, String dozwolonesieci) {
+        String[] dozwolonenazwy = dozwolonesieci.split(",");
+        for(int i = 0; i < dozwolonenazwy.length; i++) {
+            if(siecpolaczona.toLowerCase().equals(dozwolonenazwy[i].toLowerCase().trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean sprawdzWifi() {
-        WifiManager manager = (WifiManager)this.getSystemService(Context.WIFI_SERVICE);
+        WifiManager manager = (WifiManager)this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if (manager.isWifiEnabled()) {
             WifiInfo wifiInfo = manager.getConnectionInfo();
             if (wifiInfo != null) {
                 NetworkInfo.DetailedState state = WifiInfo.getDetailedStateOf(wifiInfo.getSupplicantState());
                 if (state == NetworkInfo.DetailedState.CONNECTED || state == NetworkInfo.DetailedState.OBTAINING_IPADDR) {
-                    String nazwa = wifiInfo.getSSID();
-                    if(nazwa.toLowerCase().contains("tenda_3fb340")) {
+                    String nazwa = wifiInfo.getSSID().replace("\"", "").trim();
+                    if(sprawdzNazweWifi(nazwa, Ustawienia.nazwasieci.wartosc) == true) {
                         return true;
                     } else {
-                        Toast.makeText(this, "Połącz z siecią Tenda...!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Połącz z siecią: " + Ustawienia.nazwasieci.wartosc, Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(this, "Połącz z siecią WIFI!", Toast.LENGTH_SHORT).show();
@@ -77,41 +99,89 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        activity = this;
         ustawEkran();
         ustawTagi();
         ustawClick();
+        Ustawienia.zainicjujUstawienia();
         ustawWatek();
         ustawNotyfikacje();
         ustawApi();
     }
 
+    private LayoutInflater inflater;
+    public volatile LinearLayout przyciski;
+    public volatile LinearLayout opcje;
+    public volatile EditText nazwasieci;
+    public volatile EditText adresip;
+    public volatile Button zapisz;
+    private ViewPager pager;
+
+    //Dla danego id zasobu (w res/layout) zwraca widok
+    private LinearLayout znajdzLinearLayout(int zasob) {
+        LinearLayout layouttmp = (LinearLayout) inflater.inflate(zasob, null);
+        layouttmp.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+        return layouttmp;
+    }
+
+    //Dla danego id zasobu (w res/layout) zwraca widok
+    private RelativeLayout znajdzRelativeLayout(int zasob) {
+        RelativeLayout layouttmp = (RelativeLayout) inflater.inflate(zasob, null);
+        layouttmp.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+        return layouttmp;
+    }
+
+    //Znajduje Layout z plikow XML
+    private void znajdzLayouty() {
+        inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        przyciski = znajdzLinearLayout(R.layout.przyciski);
+        opcje = znajdzLinearLayout(R.layout.opcje);
+    }
+
     private void ustawEkran() {
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        znajdzLayouty();
+        pager = (ViewPager)findViewById(R.id.pager);
+        Pager adapter = new Pager();
+        pager.setAdapter(adapter);
+        pager.setCurrentItem(0);
+        pager.setOnPageChangeListener(adapter);
+        nazwasieci = (EditText)opcje.findViewById(R.id.nazwasieci);
+        adresip = (EditText)opcje.findViewById(R.id.adresip);
+        zapisz = (Button)opcje.findViewById(R.id.zapisz);
+        zapisz.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Ustawienia.zapiszDoUstawien();
+                Toast.makeText(MainActivity.this, "Ustawienia zapisane!", Toast.LENGTH_SHORT).show();
+                pager.setCurrentItem(0);
+            }
+        });
     }
 
     private void ustawTagi() {
-        findViewById(R.id.polkaon).setTag("puls=196&kod=5330227");
-        findViewById(R.id.polkaoff).setTag("puls=196&kod=5330236");
-        findViewById(R.id.oknoon).setTag("puls=196&kod=5330371");
-        findViewById(R.id.oknooff).setTag("puls=196&kod=5330380");
-        findViewById(R.id.szafaon).setTag("puls=196&kod=5330691");
-        findViewById(R.id.szafaoff).setTag("puls=196&kod=5330700");
-        findViewById(R.id.pytajnikon).setTag("puls=196&kod=5332227");
-        findViewById(R.id.pytajnikoff).setTag("puls=196&kod=5332236");
+        przyciski.findViewById(R.id.polkaon).setTag("puls=196&kod=5330227");
+        przyciski.findViewById(R.id.polkaoff).setTag("puls=196&kod=5330236");
+        przyciski.findViewById(R.id.oknoon).setTag("puls=196&kod=5330371");
+        przyciski.findViewById(R.id.oknooff).setTag("puls=196&kod=5330380");
+        przyciski.findViewById(R.id.szafaon).setTag("puls=196&kod=5330691");
+        przyciski.findViewById(R.id.szafaoff).setTag("puls=196&kod=5330700");
+        przyciski.findViewById(R.id.pytajnikon).setTag("puls=196&kod=5332227");
+        przyciski.findViewById(R.id.pytajnikoff).setTag("puls=196&kod=5332236");
     }
 
     private void ustawClick() {
         ClickImage click = new ClickImage();
-        findViewById(R.id.polkaon).setOnClickListener(click);
-        findViewById(R.id.polkaoff).setOnClickListener(click);
-        findViewById(R.id.oknoon).setOnClickListener(click);
-        findViewById(R.id.oknooff).setOnClickListener(click);
-        findViewById(R.id.szafaon).setOnClickListener(click);
-        findViewById(R.id.szafaoff).setOnClickListener(click);
-        findViewById(R.id.pytajnikon).setOnClickListener(click);
-        findViewById(R.id.pytajnikoff).setOnClickListener(click);
+        przyciski.findViewById(R.id.polkaon).setOnClickListener(click);
+        przyciski.findViewById(R.id.polkaoff).setOnClickListener(click);
+        przyciski.findViewById(R.id.oknoon).setOnClickListener(click);
+        przyciski.findViewById(R.id.oknooff).setOnClickListener(click);
+        przyciski.findViewById(R.id.szafaon).setOnClickListener(click);
+        przyciski.findViewById(R.id.szafaoff).setOnClickListener(click);
+        przyciski.findViewById(R.id.pytajnikon).setOnClickListener(click);
+        przyciski.findViewById(R.id.pytajnikoff).setOnClickListener(click);
     }
 
     private void ustawWatek() {

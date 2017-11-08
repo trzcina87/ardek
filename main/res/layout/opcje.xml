@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/zapisz"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Zapisz" />
+
+    <TextView
+        android:id="@+id/nazwasiecitextview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="20dp"
+        android:text="Nazwa Sieci (Po przecinku)" />
+
+    <EditText
+        android:id="@+id/nazwasieci"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:singleLine="true"
+        android:maxLines="1"
+        android:inputType="textPersonName" />
+
+    <TextView
+        android:id="@+id/adresiptextview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="20dp"
+        android:text="Adres IP" />
+
+    <EditText
+        android:id="@+id/adresip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:singleLine="true"
+        android:maxLines="1"
+        android:inputType="textPersonName" />
+</LinearLayout>
